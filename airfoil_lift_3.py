@@ -19,9 +19,6 @@ def airfoil_camber(x, camber=0.05):
 # Velocity field (Bernoulli-based)
 # -------------------------------
 def velocity_field(x, y, V=30.0, camber=0.05, alpha_deg=5):
-    """
-    Returns local horizontal velocity (u_top, u_bottom) over airfoil.
-    """
     alpha = np.deg2rad(alpha_deg)
     U_inf = V * np.cos(alpha)
     influence = camber * np.exp(-((y - airfoil_camber(x)) ** 2) / 0.02)
@@ -33,7 +30,6 @@ def velocity_field(x, y, V=30.0, camber=0.05, alpha_deg=5):
 # Bernoulli pressure
 # -------------------------------
 def pressure_from_velocity(v):
-    """Compute pressure from velocity using Bernoulli"""
     return p0 - 0.5 * rho * v ** 2
 
 # -------------------------------
@@ -53,7 +49,7 @@ st.title("✈️ 2D Airfoil Lift and Takeoff Visualization")
 # Plane selection
 # -------------------------------
 plane_options = {
-    "Small Plane": 1500,   # Required lift in N/m
+    "Small Plane": 1500,
     "Medium Plane": 3000,
     "Large Plane": 5000
 }
@@ -61,18 +57,18 @@ plane_choice = st.selectbox("Select a plane", list(plane_options.keys()))
 L_required = plane_options[plane_choice]
 
 # -------------------------------
-# User sliders
+# User sliders (increased ranges)
 # -------------------------------
-V = st.slider("Freestream velocity (m/s)", 10, 100, 30)
-camber = st.slider("Airfoil camber", 0.0, 0.2, 0.05)
-alpha = st.slider("Angle of attack (deg)", -10, 20, 5)
+V = st.slider("Freestream velocity (m/s)", 10, 200, 30)        # Increased max velocity
+camber = st.slider("Airfoil camber", 0.0, 0.5, 0.05)          # Increased max camber
+alpha = st.slider("Angle of attack (deg)", -10, 45, 5)         # Increased max alpha
 
 # -------------------------------
 # Discretize chord
 # -------------------------------
 x = np.linspace(0, 1, 400)
-y_top = airfoil_camber(x)
-y_bottom = -airfoil_camber(x)
+y_top = airfoil_camber(x, camber)
+y_bottom = -airfoil_camber(x, camber)
 
 # -------------------------------
 # Velocity fields
@@ -106,9 +102,9 @@ ax1.grid(True)
 st.pyplot(fig1)
 
 # -------------------------------
-# Lift vs Airspeed plot
+# Lift vs Airspeed plot (increased range)
 # -------------------------------
-V_range = np.linspace(1, 100, 200)
+V_range = np.linspace(1, 200, 300)  # Increased max velocity and resolution
 lift_vals = []
 
 for V_test in V_range:
@@ -117,7 +113,6 @@ for V_test in V_range:
     p_bottom = pressure_from_velocity(u_bottom)
     lift_vals.append(compute_lift(x, p_top, p_bottom))
 
-# Compute takeoff speed for selected plane
 lift_vals = np.array(lift_vals)
 V_takeoff_idx = np.where(lift_vals >= L_required)[0]
 if len(V_takeoff_idx) > 0:
@@ -138,4 +133,3 @@ ax2.set_title(f"Lift vs Airspeed ({plane_choice})")
 ax2.grid(True)
 ax2.legend()
 st.pyplot(fig2)
-
